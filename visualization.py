@@ -30,7 +30,7 @@ image = np.zeros((rows, columns), np.bool_)
 
 fn, th, ts = 0, -1, 0
 while True:
-	point = input("Press Enter for 0,0 or to thicken by 1. Enter q to quit. Enter function and thickness values (Example: 0,0): ")
+	point = input("Press Enter for 0,0 or to thicken by 1. Enter q to quit. Enter function and thickness values (Last: "+str(fn)+","+str(th)+"): ")
 	point = point.strip()
 	if point == "q":
 		break
