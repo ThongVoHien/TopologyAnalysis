@@ -77,7 +77,7 @@ If not, it prints "Incorrect" followed by the location of error.
 
 You can also visualize the bifiltration from the bigrades file:
 ```
-python visualization.py [bigrades-file]
+python visualize.py [bigrades-file]
 ```
 In the terminal prompt, enter the bigrade pair for which you want to visualize the image (for example: 2,3).
 Examine the plot created and close it to enter another bigrade.
