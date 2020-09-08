@@ -29,8 +29,12 @@ struct stats {
 	int num_thick_levels;
 	int max_num_bigrades;
 	double avg_num_bigrades;
+
 	double max_thick_time;
 	double avg_thick_time;
+	double max_thin_time;
+	double avg_thin_time;
+
 	double total_time;
 	double output_time;
 	double init_mem;
@@ -45,6 +49,8 @@ struct stats {
 		out << "Average bigrades on a pixel: " << avg_num_bigrades << endl;
 		out << "Maximum time to thicken: " << max_thick_time/1000 << "s" << endl;
 		out << "Average time to thicken: " << avg_thick_time/1000 << "s" << endl;
+		out << "Maximum time to thin: " << max_thin_time/1000 << "s" << endl;
+		out << "Average time to thin: " << avg_thin_time/1000 << "s" << endl;
 		out << "Total time to build bifiltration: " << total_time/1000 << "s" << endl;
 		out << "Time to write bifiltration to output file: " << output_time/1000 << "s" << endl;
 	}
@@ -95,10 +101,10 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 		if (log) out << "Popping element: Pixel-" << n->label << endl;
 		que.pop();
 		num_que_items--;
-		if (n->depth > Statistics.num_thick_levels)
-			Statistics.num_thick_levels = n->depth;
-		if (n->bigrades.size() > Statistics.max_num_bigrades)
-			Statistics.max_num_bigrades = n->bigrades.size();
+		// if (n->depth > Statistics.num_thick_levels)
+		// 	Statistics.num_thick_levels = n->depth;
+		// if (n->bigrades.size() > Statistics.max_num_bigrades)
+		// 	Statistics.max_num_bigrades = n->bigrades.size();
 
 		for (int i = 0; i < n->children.size(); i++) {
 			if (value == 0) continue;
@@ -108,7 +114,7 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 				if (log) out << "Empty negative_bigrades for Pixel-" << n->children[i]->label << endl;
 				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
 				n->children[i]->negative_bigrades.push_back(pair<int,int>(value-1, n->children[i]->depth));
-				Statistics.avg_num_bigrades++;
+				// Statistics.avg_num_bigrades++;
 				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
 				que.push(n->children[i]);
 				num_que_items++;
@@ -120,7 +126,7 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 				if (log) print_bigrades(n->children[i]->negative_bigrades, out);
 				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
 				n->children[i]->negative_bigrades.push_back(pair<int,int>(value-1, n->children[i]->depth));
-				Statistics.avg_num_bigrades++;
+				// Statistics.avg_num_bigrades++;
 				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
 				que.push(n->children[i]);
 				num_que_items++;
@@ -141,8 +147,10 @@ void convert_white_to_negative_bigrades(bool log=false, ostream& out=cout) {
 			graph[i]->negative_bigrades.push_back(negative_bigrade);
 			while ((graph[i]->bigrades.size() > 0) && 
 					(graph[i]->bigrades[graph[i]->bigrades.size() - 1].first >= negative_bigrade.first)){
+				Statistics.avg_num_bigrades--;
 				graph[i]->bigrades.pop_back();
 			}
+			Statistics.avg_num_bigrades++;
 			graph[i]->bigrades.push_back(negative_bigrade);
 		}
 	}
@@ -167,8 +175,8 @@ void get_all_negative_bigrades(bool log=false, ostream& out=cout) {
 		auto thick_stop = chrono::high_resolution_clock::now();
 		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
 		Statistics.avg_thick_time += elapsted_time;
-		if (elapsted_time > Statistics.max_thick_time)
-			Statistics.max_thick_time = elapsted_time;
+		if (elapsted_time > Statistics.max_thin_time)
+			Statistics.max_thin_time = elapsted_time;
 	}
 	convert_white_to_negative_bigrades(log, out);
 }
@@ -385,6 +393,9 @@ int main(int argc, char** argv) {
 	Statistics.avg_num_bigrades = 0;
 	Statistics.max_thick_time = 0;
 	Statistics.avg_thick_time = 0;
+
+	Statistics.max_thin_time = 0;
+	Statistics.avg_thin_time = 0;
 
 	build_graph();
 
