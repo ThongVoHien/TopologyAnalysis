@@ -86,8 +86,8 @@ void build_graph() {
 	}
 }
 
-void get_bigrades(int value, bool log=false, ostream& out=cout) {
-	if (log) out << "New call to get_bigrades()" << endl;
+void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
+	if (log) out << "New call to get_white_bigrades()" << endl;
 	
 	while (!que.empty()){
 		node* n = que.front();
@@ -100,6 +100,7 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 			Statistics.max_num_bigrades = n->bigrades.size();
 
 		for (int i = 0; i < n->children.size(); i++) {
+			if (value == 0) continue;
 			if (n->children[i]->bigrades.empty()) {
 				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
 				n->children[i]->depth = n->depth + 1;
@@ -127,7 +128,20 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 	}
 }
 
-void get_all_bigrades(bool log=false, ostream& out=cout) {
+void convert_white_to_negative_bigrades(bool log=false, ostream& out=cout) {
+	if (log) out << "New call to convert_white_to_negative_bigrades()" << endl;
+	
+	for (int i = 0; i < graph.size(); i++) {
+		vector< pair<int, int>> bg = graph[i]->bigrades;
+		graph[i]->bigrades.clear();
+		for (int j = 0; j < bg.size()-1; j++){
+			pair<int, int> negative_bigrade = {min(bg[j].first, bg[j+1].first)+1, min(-bg[j].second, -bg[j+1].second)+1};
+			graph[i]->bigrades.push_back(negative_bigrade);
+		}
+	}
+}
+
+void get_negative_bigrades(bool log=false, ostream& out=cout) {
 	for (map<int, vector<int>>::reverse_iterator it = value_list.rbegin(); it != value_list.rend(); it++) {
 		auto thick_start = chrono::high_resolution_clock::now();
 		if (log) out << "Working with value: " << it->first << endl;
@@ -141,7 +155,7 @@ void get_all_bigrades(bool log=false, ostream& out=cout) {
 		if (log) out << endl;
 		que.push(root);
 		num_que_items = 1;
-		get_bigrades(it->first, log, out);
+		get_white_bigrades(it->first, log, out);
 
 		auto thick_stop = chrono::high_resolution_clock::now();
 		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
@@ -149,6 +163,8 @@ void get_all_bigrades(bool log=false, ostream& out=cout) {
 		if (elapsted_time > Statistics.max_thick_time)
 			Statistics.max_thick_time = elapsted_time;
 	}
+	convert_white_to_negative_bigrades(log, out);
+
 }
 
 void print_all_bigrades(ostream& out=cout) {
