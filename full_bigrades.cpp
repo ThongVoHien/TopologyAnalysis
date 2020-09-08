@@ -15,6 +15,7 @@ struct node {
 	int r, c;
 	vector<node*> children;
 	int depth;
+	vector< pair<int,int> > negative_bigrades;
 	vector< pair<int,int> > bigrades;
 
 	node() { label = -1; }
@@ -101,24 +102,24 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 
 		for (int i = 0; i < n->children.size(); i++) {
 			if (value == 0) continue;
-			if (n->children[i]->bigrades.empty()) {
+			if (n->children[i]->negative_bigrades.empty()) {
 				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
 				n->children[i]->depth = n->depth + 1;
-				if (log) out << "Empty bigrades for Pixel-" << n->children[i]->label << endl;
+				if (log) out << "Empty negative_bigrades for Pixel-" << n->children[i]->label << endl;
 				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
-				n->children[i]->bigrades.push_back(pair<int,int>(value-1, n->children[i]->depth));
+				n->children[i]->negative_bigrades.push_back(pair<int,int>(value-1, n->children[i]->depth));
 				Statistics.avg_num_bigrades++;
 				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
 				que.push(n->children[i]);
 				num_que_items++;
 			}
-			else if (get_min_y(n->children[i]->bigrades) > n->depth + 1) {
+			else if (get_min_y(n->children[i]->negative_bigrades) > n->depth + 1) {
 				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
 				n->children[i]->depth = n->depth + 1;
 				if (log) out << "Bigrades for Pixel-" << n->children[i]->label << ": ";
-				if (log) print_bigrades(n->children[i]->bigrades, out);
+				if (log) print_bigrades(n->children[i]->negative_bigrades, out);
 				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
-				n->children[i]->bigrades.push_back(pair<int,int>(value-1, n->children[i]->depth));
+				n->children[i]->negative_bigrades.push_back(pair<int,int>(value-1, n->children[i]->depth));
 				Statistics.avg_num_bigrades++;
 				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
 				que.push(n->children[i]);
@@ -132,16 +133,22 @@ void convert_white_to_negative_bigrades(bool log=false, ostream& out=cout) {
 	if (log) out << "New call to convert_white_to_negative_bigrades()" << endl;
 	
 	for (int i = 0; i < graph.size(); i++) {
-		vector< pair<int, int>> bg = graph[i]->bigrades;
-		graph[i]->bigrades.clear();
-		for (int j = 0; j < bg.size()-1; j++){
+		vector< pair<int, int>> bg = graph[i]->negative_bigrades;
+		graph[i]->negative_bigrades.clear();
+		for (int j = bg.size()-2; j >= 0; j--){
 			pair<int, int> negative_bigrade = {min(bg[j].first, bg[j+1].first)+1, min(-bg[j].second, -bg[j+1].second)+1};
+			if (negative_bigrade.second == 0) continue;
+			graph[i]->negative_bigrades.push_back(negative_bigrade);
+			while ((graph[i]->bigrades.size() > 0) && 
+					(graph[i]->bigrades[graph[i]->bigrades.size() - 1].first >= negative_bigrade.first)){
+				graph[i]->bigrades.pop_back();
+			}
 			graph[i]->bigrades.push_back(negative_bigrade);
 		}
 	}
 }
 
-void get_negative_bigrades(bool log=false, ostream& out=cout) {
+void get_all_negative_bigrades(bool log=false, ostream& out=cout) {
 	for (map<int, vector<int>>::reverse_iterator it = value_list.rbegin(); it != value_list.rend(); it++) {
 		auto thick_start = chrono::high_resolution_clock::now();
 		if (log) out << "Working with value: " << it->first << endl;
@@ -164,6 +171,72 @@ void get_negative_bigrades(bool log=false, ostream& out=cout) {
 			Statistics.max_thick_time = elapsted_time;
 	}
 	convert_white_to_negative_bigrades(log, out);
+}
+
+void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
+	if (log) out << "New call to get_bigrades()" << endl;
+	
+	while (!que.empty()){
+		node* n = que.front();
+		if (log) out << "Popping element: Pixel-" << n->label << endl;
+		que.pop();
+		num_que_items--;
+		if (n->depth > Statistics.num_thick_levels)
+			Statistics.num_thick_levels = n->depth;
+		if (n->bigrades.size() > Statistics.max_num_bigrades)
+			Statistics.max_num_bigrades = n->bigrades.size();
+
+		for (int i = 0; i < n->children.size(); i++) {
+			if (n->children[i]->bigrades.empty()) {
+				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
+				n->children[i]->depth = n->depth + 1;
+				if (log) out << "Empty bigrades for Pixel-" << n->children[i]->label << endl;
+				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
+				n->children[i]->bigrades.push_back(pair<int,int>(value, n->children[i]->depth));
+				Statistics.avg_num_bigrades++;
+				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
+				que.push(n->children[i]);
+				num_que_items++;
+			}
+			else if (get_min_y(n->children[i]->bigrades) > n->depth + 1) {
+				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
+				n->children[i]->depth = n->depth + 1;
+				if (log) out << "Bigrades for Pixel-" << n->children[i]->label << ": ";
+				if (log) print_bigrades(n->children[i]->bigrades, out);
+				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
+				n->children[i]->bigrades.push_back(pair<int,int>(value, n->children[i]->depth));
+				Statistics.avg_num_bigrades++;
+				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
+				que.push(n->children[i]);
+				num_que_items++;
+			}
+		}
+	}
+}
+
+void get_all_bigrades(bool log=false, ostream& out=cout) {
+	for (auto it = value_list.begin(); it != prev(value_list.end()); it++) {
+		auto thick_start = chrono::high_resolution_clock::now();
+		if (log) out << "Working with value: " << it->first << endl;
+		node* root = new node();
+		root->depth = -1;
+		if (log) out << "Pixels: ";
+		for (int i = 0; i < it->second.size(); i++) {
+			root->children.push_back(graph[it->second[i]]);
+			if (log) out << "Pixel-" << it->second[i] << " ";
+		}
+		if (log) out << endl;
+		que.push(root);
+		num_que_items = 1;
+		get_positive_bigrades(it->first, log, out);
+		auto thick_stop = chrono::high_resolution_clock::now();
+		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
+		Statistics.avg_thick_time += elapsted_time;
+		if (elapsted_time > Statistics.max_thick_time)
+			Statistics.max_thick_time = elapsted_time;
+	}
+
+	get_all_negative_bigrades(log, out);
 
 }
 
