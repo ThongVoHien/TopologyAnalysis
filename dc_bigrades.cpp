@@ -15,6 +15,7 @@ using namespace std;
 struct node {
 	int label;
 	int r, c;
+	vector<node*> children;
 	vector< pair<int,double> > dc_bigrades;
 
 	node() { label = -1; }
@@ -48,7 +49,7 @@ struct stats {
 vector<node*> graph;
 map<int, vector<int> > value_list;
 map<double, vector< pair<int,int> > > distance_list;
-int rows, columns, count;
+int rows, columns, Count;
 
 void print_bigrades(vector< pair<int,double> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
@@ -66,7 +67,7 @@ double get_min_y(vector< pair<int, double> >& grades) {
 }
 
 void get_dc_bigrades(bool log=false, ostream& out=cout) {
-	count = 0;
+	Count = 0;
 	// go through all values
 	for (auto it = value_list.begin(); it != value_list.end(); it++) {
 		// go through all possible distances
@@ -85,14 +86,14 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						} else if (get_min_y(graph[plabel]->dc_bigrades) > d->first) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						}
 					}
 					if (pixel->c - distance->first > -1 && pixel->r + distance->second < rows) {
@@ -101,14 +102,14 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						} else if (get_min_y(graph[plabel]->dc_bigrades) > d->first) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						}
 					}
 					if (pixel->c + distance->first < columns && pixel->r - distance->second > -1) {
@@ -117,14 +118,14 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						} else if (get_min_y(graph[plabel]->dc_bigrades) > d->first) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						}
 					}
 					if (pixel->c - distance->first > -1 && pixel->r - distance->second > -1) {
@@ -133,14 +134,14 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						} else if (get_min_y(graph[plabel]->dc_bigrades) > d->first) {
 							graph[plabel]->dc_bigrades.push_back(pair<int,double>(it->first, d->first));
 							num_set++;
 							Statistics.avg_num_bigrades++;
-							if (graph[plabel]->bigrades.size() > Statistics.max_num_bigrades)
-								Statistics.max_num_bigrades = graph[plabel]->bigrades.size();
+							if (graph[plabel]->dc_bigrades.size() > Statistics.max_num_bigrades)
+								Statistics.max_num_bigrades = graph[plabel]->dc_bigrades.size();
 						}
 					}
 					if (num_set == graph.size())
@@ -150,7 +151,7 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 					break;
 			}
 			if (num_set == graph.size()) {
-				count++;
+				Count++;
 				break;
 			}
 		}
@@ -332,7 +333,7 @@ int main(int argc, char** argv) {
 	Statistics.output_time = chrono::duration_cast<chrono::milliseconds>(out_stop - out_start).count();
 
 	Statistics.print();
-	cout << "Break out: " << count << " times." << endl;
+	cout << "Break out: " << Count << " times." << endl;
 
 	// print_all_distances();
 	// print_all_square_edge();
