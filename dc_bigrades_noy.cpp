@@ -60,8 +60,6 @@ void reset() {
 		graph[i]->v = -1;
 	}
 	distance_levels.clear();
-	next_dist = -1;
-	Count = 0;
 }
 
 void print_bigrades(vector< pair<int,double> > bg, ostream& out=cout) {
