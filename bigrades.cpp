@@ -53,7 +53,9 @@ struct stats {
 /* global variables */
 queue<node*> que;
 int num_que_items;
+// contain structure, connection of all nodes in the square
 vector<node*> graph;
+// mapping value to all node labels with that value
 map<int, vector<int> > value_list;
 int rows, columns;
 
@@ -128,12 +130,15 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 }
 
 void get_all_bigrades(bool log=false, ostream& out=cout) {
+	// scan all possible values (smallest to largest)
 	for (auto it = value_list.begin(); it != value_list.end(); it++) {
 		auto thick_start = chrono::high_resolution_clock::now();
 		if (log) out << "Working with value: " << it->first << endl;
 		node* root = new node();
 		root->depth = -1;
 		if (log) out << "Pixels: ";
+
+		// obtain all points value = current value = it->first
 		for (int i = 0; i < it->second.size(); i++) {
 			root->children.push_back(graph[it->second[i]]);
 			if (log) out << "Pixel-" << it->second[i] << " ";
