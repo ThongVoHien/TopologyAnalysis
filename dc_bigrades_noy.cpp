@@ -5,6 +5,8 @@
 #include <map>
 #include <limits>
 #include <chrono>
+#include <iomanip>
+#include <cmath>
 
 using namespace std;
 
@@ -14,8 +16,9 @@ struct node {
 	int label;
 	int r, c;
 	vector<node*> children;
-	int depth;
-	vector< pair<int,int> > bigrades;
+	vector< pair<int,double> > dc_bigrades;
+	int h, v;
+	double distance;
 
 	node() { label = -1; }
 };
@@ -25,7 +28,7 @@ struct stats {
 	int image_columns;
 	double image_read_time;
 	int distinct_fn_vals;
-	int num_thick_levels;
+	int distinct_dc_vals;
 	int max_num_bigrades;
 	double avg_num_bigrades;
 	double max_thick_time;
@@ -37,7 +40,7 @@ struct stats {
 		out << "Image Size: " << image_columns << "x" << image_rows << endl;
 		out << "Time to read in image: " << image_read_time/1000 << "s" << endl;
 		out << "Number of distinct function values: " << distinct_fn_vals << endl;
-		out << "Number of thickness levels: " << num_thick_levels << endl;
+		out << "Number of distinct distance values: " << distinct_dc_vals << endl;
 		out << "Maximum bigrades on a pixel: " << max_num_bigrades << endl;
 		out << "Average bigrades on a pixel: " << avg_num_bigrades << endl;
 		out << "Maximum time to thicken: " << max_thick_time/1000 << "s" << endl;
@@ -49,22 +52,30 @@ struct stats {
 } Statistics;
 
 /* global variables */
-queue<node*> que;
-int num_que_items;
-// contain structure, connection of all nodes in the square
 vector<node*> graph;
-// mapping value to all node labels with that value
 map<int, vector<int> > value_list;
+map<double, vector<int> > distance_levels;
 int rows, columns;
 
-void print_bigrades(vector< pair<int,int> > bg, ostream& out=cout) {
+void reset() {
+	for (int i = 0; i < graph.size(); i++) {
+		graph[i]->h = -1;
+		graph[i]->v = -1;
+		graph[i]->distance = -1;
+	}
+	if (distance_levels.size() > Statistics.distinct_dc_vals)
+		Statistics.distinct_dc_vals = distance_levels.size();
+	distance_levels.clear();
+}
+
+void print_bigrades(vector< pair<int,double> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
-		out << "(" << bg[i].first << "," << bg[i].second << ")" << " ";
+		out << "(" << bg[i].first << "," << setprecision(2) << bg[i].second << ")" << " ";
 	out << endl;
 }
 
-int get_min_y(vector< pair<int, int> >& grades) {
-	int min_y = grades[0].second;
+double get_min_y(vector< pair<int, double> >& grades) {
+	double min_y = grades[0].second;
 	for (int i = 1; i < grades.size(); i++) {
 		if (grades[i].second < min_y)
 			min_y = grades[i].second;
@@ -73,78 +84,77 @@ int get_min_y(vector< pair<int, int> >& grades) {
 }
 
 void build_graph() {
-
 	for (int i = 0; i < graph.size(); i++) {
-		if (i % columns != 0)
+		// left
+		if (i % columns != 0) {
 			graph[i]->children.push_back(graph[i-1]);
-		if ((i+1) % columns != 0)
+			// top left
+			if (i-1 >= columns)
+				graph[i]->children.push_back(graph[i-1-columns]);
+			// bottom left
+			if (i-1 + columns < rows*columns)
+				graph[i]->children.push_back(graph[i-1+columns]);
+		}
+		// right
+		if ((i+1) % columns != 0) {
 			graph[i]->children.push_back(graph[i+1]);
+			// top right
+			if (i+1 >= columns)
+				graph[i]->children.push_back(graph[i+1-columns]);
+			// bottom right
+			if (i+1 + columns < rows*columns)
+				graph[i]->children.push_back(graph[i+1+columns]);
+		}
+		// top
 		if (i >= columns)
 			graph[i]->children.push_back(graph[i-columns]);
+		// bottom
 		if (i + columns < rows*columns)
 			graph[i]->children.push_back(graph[i+columns]);
+		// diagonally adjacent
 	}
 }
 
-void get_bigrades(int value, bool log=false, ostream& out=cout) {
-	if (log) out << "New call to get_bigrades()" << endl;
-	
-	while (!que.empty()){
-		node* n = que.front();
-		if (log) out << "Popping element: Pixel-" << n->label << endl;
-		que.pop();
-		num_que_items--;
-		if (n->depth > Statistics.num_thick_levels)
-			Statistics.num_thick_levels = n->depth;
-		if (n->bigrades.size() > Statistics.max_num_bigrades)
-			Statistics.max_num_bigrades = n->bigrades.size();
-
-		for (int i = 0; i < n->children.size(); i++) {
-			if (n->children[i]->bigrades.empty()) {
-				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
-				n->children[i]->depth = n->depth + 1;
-				if (log) out << "Empty bigrades for Pixel-" << n->children[i]->label << endl;
-				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
-				n->children[i]->bigrades.push_back(pair<int,int>(value, n->children[i]->depth));
+void get_dc_bigrades(int value, bool log=false, ostream& out=cout) {
+	for (auto d = distance_levels.begin(); d != distance_levels.end(); d++) {
+		for (auto n = d->second.begin(); n != d->second.end(); n++) {
+			if (graph[*n]->dc_bigrades.empty()) {
+				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
 				Statistics.avg_num_bigrades++;
-				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
-				que.push(n->children[i]);
-				num_que_items++;
 			}
-			else if (get_min_y(n->children[i]->bigrades) > n->depth + 1) {
-				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
-				n->children[i]->depth = n->depth + 1;
-				if (log) out << "Bigrades for Pixel-" << n->children[i]->label << ": ";
-				if (log) print_bigrades(n->children[i]->bigrades, out);
-				if (log) out << "Adding bigrade: (" << value << "," << n->children[i]->depth << ")" << endl;
-				n->children[i]->bigrades.push_back(pair<int,int>(value, n->children[i]->depth));
+			else if (get_min_y(graph[*n]->dc_bigrades) > d->first) {
+				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
 				Statistics.avg_num_bigrades++;
-				if (log) out << "Pushing into queue: Pixel-" << n->children[i]->label << endl;
-				que.push(n->children[i]);
-				num_que_items++;
 			}
+			for (int j = 0; j < graph[*n]->children.size(); j++) {
+				int r = abs(graph[*n]->r - graph[*n]->children[j]->r) + graph[*n]->v;
+				int c = abs(graph[*n]->c - graph[*n]->children[j]->c) + graph[*n]->h;
+				double distance = sqrt(c*c+r*r);
+				if (graph[*n]->children[j]->distance == -1 || distance < graph[*n]->children[j]->distance) {
+					graph[*n]->children[j]->h = c;
+					graph[*n]->children[j]->v = r;
+					graph[*n]->children[j]->distance = distance;
+					distance_levels[distance].push_back(graph[*n]->children[j]->label);
+				}
+			}
+			if (graph[*n]->dc_bigrades.size() > Statistics.max_num_bigrades)
+				Statistics.max_num_bigrades = graph[*n]->dc_bigrades.size();
 		}
 	}
 }
 
-void get_all_bigrades(bool log=false, ostream& out=cout) {
-	// scan all possible values (smallest to largest)
+void get_all_dc_bigrades(bool log=false, ostream& out=cout) {
 	for (auto it = value_list.begin(); it != value_list.end(); it++) {
 		auto thick_start = chrono::high_resolution_clock::now();
-		if (log) out << "Working with value: " << it->first << endl;
-		node* root = new node();
-		root->depth = -1;
-		if (log) out << "Pixels: ";
-
-		// obtain all points value = current value = it->first
+		reset();
 		for (int i = 0; i < it->second.size(); i++) {
-			root->children.push_back(graph[it->second[i]]);
-			if (log) out << "Pixel-" << it->second[i] << " ";
+			distance_levels[0].push_back(graph[it->second[i]]->label);
+			graph[it->second[i]]->h = 0;
+			graph[it->second[i]]->v = 0;
+			graph[it->second[i]]->distance = 0;
 		}
-		if (log) out << endl;
-		que.push(root);
-		num_que_items = 1;
-		get_bigrades(it->first, log, out);
+		
+		get_dc_bigrades(it->first, log, out);
 		auto thick_stop = chrono::high_resolution_clock::now();
 		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
 		Statistics.avg_thick_time += elapsted_time;
@@ -157,7 +167,7 @@ void print_all_bigrades(ostream& out=cout) {
 	out << "(" << columns << "," << rows << ")" << endl;
 	for (int i = 0; i < graph.size(); i++) {
 		out << graph[i]->label << ": ";
-		print_bigrades(graph[i]->bigrades, out);
+		print_bigrades(graph[i]->dc_bigrades, out);
 	}
 }
 
@@ -229,7 +239,7 @@ int main(int argc, char** argv) {
 	if (argc == 2) {
 		filename = argv[1];
 		outputfile = argv[1];
-		outputfile += "_bigrades";
+		outputfile += "_dc_bigrades_noy";
 		logging = false;
 	}
 	else if (argc == 3) {
@@ -245,7 +255,7 @@ int main(int argc, char** argv) {
 	}
 	else {
 		filename = "data_files/test_image";
-		outputfile = "data_files/test_image_bigrades";
+		outputfile = "data_files/test_image_dc_bigrades_noy";
 		logging = false;
 	}
 
@@ -291,24 +301,23 @@ int main(int argc, char** argv) {
 	}
 	auto read_stop = chrono::high_resolution_clock::now();
 
+	build_graph();
+
 	Statistics.image_read_time = chrono::duration_cast<chrono::milliseconds>(read_stop - read_start).count();
 	Statistics.distinct_fn_vals = value_list.size();
-	Statistics.num_thick_levels = 0;
+	Statistics.distinct_dc_vals = 0;
 	Statistics.max_num_bigrades = 0;
 	Statistics.avg_num_bigrades = 0;
-	Statistics.max_thick_time = 0;
-	Statistics.avg_thick_time = 0;
-
-	build_graph();
 
 	if (logging) {
 		ofstream logger(log_file);
-		get_all_bigrades(logging, logger);
+		get_all_dc_bigrades(logging, logger);
 		logger.close();
 	}
 	else {
 		auto bigrade_start = chrono::high_resolution_clock::now();
-		get_all_bigrades(logging);
+		// get_all_bigrades(logging);
+		get_all_dc_bigrades(logging);
 		auto bigrade_stop = chrono::high_resolution_clock::now();
 		Statistics.total_time = chrono::duration_cast<chrono::milliseconds>(bigrade_stop - bigrade_start).count();
 	}
@@ -323,6 +332,7 @@ int main(int argc, char** argv) {
 
 	Statistics.print();
 
+	// print_all_distances();
 	// print_all_square_edge();
 	// print_all_edge_vertex(num_edges);
 	// print_graph();
