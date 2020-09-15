@@ -32,8 +32,6 @@ struct stats {
 	double avg_thick_time;
 	double total_time;
 	double output_time;
-	double init_mem;
-	double final_mem;
 
 	void print(ostream& out=cout) {
 		out << "Image Size: " << image_columns << "x" << image_rows << endl;

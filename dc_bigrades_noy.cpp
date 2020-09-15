@@ -17,8 +17,8 @@ struct node {
 	int r, c;
 	vector<node*> children;
 	vector< pair<int,double> > dc_bigrades;
-	bool visited;
 	int h, v;
+	double distance;
 
 	node() { label = -1; }
 };
@@ -31,6 +31,8 @@ struct stats {
 	int distinct_dc_vals;
 	int max_num_bigrades;
 	double avg_num_bigrades;
+	double max_thick_time;
+	double avg_thick_time;
 	double total_time;
 	double output_time;
 
@@ -41,6 +43,8 @@ struct stats {
 		out << "Number of distinct distance values: " << distinct_dc_vals << endl;
 		out << "Maximum bigrades on a pixel: " << max_num_bigrades << endl;
 		out << "Average bigrades on a pixel: " << avg_num_bigrades << endl;
+		out << "Maximum time to thicken: " << max_thick_time/1000 << "s" << endl;
+		out << "Average time to thicken: " << avg_thick_time/1000 << "s" << endl;
 		out << "Total time to build bifiltration: " << total_time/1000 << "s" << endl;
 		out << "Time to write bifiltration to output file: " << output_time/1000 << "s" << endl;
 	}
@@ -55,10 +59,12 @@ int rows, columns;
 
 void reset() {
 	for (int i = 0; i < graph.size(); i++) {
-		graph[i]->visited = false;
 		graph[i]->h = -1;
 		graph[i]->v = -1;
+		graph[i]->distance = -1;
 	}
+	if (distance_levels.size() > Statistics.distinct_dc_vals)
+		Statistics.distinct_dc_vals = distance_levels.size();
 	distance_levels.clear();
 }
 
@@ -79,50 +85,81 @@ double get_min_y(vector< pair<int, double> >& grades) {
 
 void build_graph() {
 	for (int i = 0; i < graph.size(); i++) {
-		if (i % columns != 0)
+		// left
+		if (i % columns != 0) {
 			graph[i]->children.push_back(graph[i-1]);
-		if ((i+1) % columns != 0)
+			// top left
+			if (i-1 >= columns)
+				graph[i]->children.push_back(graph[i-1-columns]);
+			// bottom left
+			if (i-1 + columns < rows*columns)
+				graph[i]->children.push_back(graph[i-1+columns]);
+		}
+		// right
+		if ((i+1) % columns != 0) {
 			graph[i]->children.push_back(graph[i+1]);
+			// top right
+			if (i+1 >= columns)
+				graph[i]->children.push_back(graph[i+1-columns]);
+			// bottom right
+			if (i+1 + columns < rows*columns)
+				graph[i]->children.push_back(graph[i+1+columns]);
+		}
+		// top
 		if (i >= columns)
 			graph[i]->children.push_back(graph[i-columns]);
+		// bottom
 		if (i + columns < rows*columns)
 			graph[i]->children.push_back(graph[i+columns]);
+		// diagonally adjacent
 	}
 }
 
 void get_dc_bigrades(int value, bool log=false, ostream& out=cout) {
 	for (auto d = distance_levels.begin(); d != distance_levels.end(); d++) {
 		for (auto n = d->second.begin(); n != d->second.end(); n++) {
-			if (graph[*n]->dc_bigrades.empty())
+			if (graph[*n]->dc_bigrades.empty()) {
 				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
-			else if (get_min_y(graph[*n]->dc_bigrades) > d->first)
+				Statistics.avg_num_bigrades++;
+			}
+			else if (get_min_y(graph[*n]->dc_bigrades) > d->first) {
 				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
+				Statistics.avg_num_bigrades++;
+			}
 			for (int j = 0; j < graph[*n]->children.size(); j++) {
-				if (! graph[*n]->children[j]->visited) {
-					int r = abs(graph[*n]->r - graph[*n]->children[j]->r);
-					int c = abs(graph[*n]->c - graph[*n]->children[j]->c);
-					graph[*n]->children[j]->h = graph[*n]->h + c;
-					graph[*n]->children[j]->v = graph[*n]->v + r;
-					double distance = sqrt((graph[*n]->children[j]->h)*(graph[*n]->children[j]->h)+(graph[*n]->children[j]->v)*(graph[*n]->children[j]->v));
+				int r = abs(graph[*n]->r - graph[*n]->children[j]->r) + graph[*n]->v;
+				int c = abs(graph[*n]->c - graph[*n]->children[j]->c) + graph[*n]->h;
+				double distance = sqrt(c*c+r*r);
+				if (graph[*n]->children[j]->distance == -1 || distance < graph[*n]->children[j]->distance) {
+					graph[*n]->children[j]->h = c;
+					graph[*n]->children[j]->v = r;
+					graph[*n]->children[j]->distance = distance;
 					distance_levels[distance].push_back(graph[*n]->children[j]->label);
-					graph[*n]->children[j]->visited = true;
 				}
 			}
+			if (graph[*n]->dc_bigrades.size() > Statistics.max_num_bigrades)
+				Statistics.max_num_bigrades = graph[*n]->dc_bigrades.size();
 		}
 	}
 }
 
 void get_all_dc_bigrades(bool log=false, ostream& out=cout) {
 	for (auto it = value_list.begin(); it != value_list.end(); it++) {
+		auto thick_start = chrono::high_resolution_clock::now();
 		reset();
 		for (int i = 0; i < it->second.size(); i++) {
 			distance_levels[0].push_back(graph[it->second[i]]->label);
-			graph[it->second[i]]->visited = true;
 			graph[it->second[i]]->h = 0;
 			graph[it->second[i]]->v = 0;
+			graph[it->second[i]]->distance = 0;
 		}
 		
 		get_dc_bigrades(it->first, log, out);
+		auto thick_stop = chrono::high_resolution_clock::now();
+		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
+		Statistics.avg_thick_time += elapsted_time;
+		if (elapsted_time > Statistics.max_thick_time)
+			Statistics.max_thick_time = elapsted_time;
 	}
 }
 
@@ -268,7 +305,7 @@ int main(int argc, char** argv) {
 
 	Statistics.image_read_time = chrono::duration_cast<chrono::milliseconds>(read_stop - read_start).count();
 	Statistics.distinct_fn_vals = value_list.size();
-	// Statistics.distinct_dc_vals = distance_list.size();
+	Statistics.distinct_dc_vals = 0;
 	Statistics.max_num_bigrades = 0;
 	Statistics.avg_num_bigrades = 0;
 
@@ -286,6 +323,7 @@ int main(int argc, char** argv) {
 	}
 
 	Statistics.avg_num_bigrades /= num_squares;
+	Statistics.avg_thick_time /= Statistics.distinct_fn_vals;
 
 	auto out_start = chrono::high_resolution_clock::now();
 	print_all_bigrades(output);
