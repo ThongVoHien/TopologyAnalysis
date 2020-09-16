@@ -114,10 +114,13 @@ void build_graph() {
 		// diagonally adjacent
 	}
 }
+int Count = 0;
 
 void get_dc_bigrades(int value, bool log=false, ostream& out=cout) {
 	for (auto d = distance_levels.begin(); d != distance_levels.end(); d++) {
+		// for each pixel with that pixel
 		for (auto n = d->second.begin(); n != d->second.end(); n++) {
+			Count ++;
 			if (graph[*n]->dc_bigrades.empty()) {
 				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
 				Statistics.avg_num_bigrades++;
@@ -144,7 +147,7 @@ void get_dc_bigrades(int value, bool log=false, ostream& out=cout) {
 }
 
 void get_all_dc_bigrades(bool log=false, ostream& out=cout) {
-	for (auto it = value_list.begin(); it != value_list.end(); it++) {
+	for (auto it = value_list.begin(); it != value_list.end(); it++) { // O(value)
 		auto thick_start = chrono::high_resolution_clock::now();
 		reset();
 		for (int i = 0; i < it->second.size(); i++) {
@@ -161,6 +164,7 @@ void get_all_dc_bigrades(bool log=false, ostream& out=cout) {
 		if (elapsted_time > Statistics.max_thick_time)
 			Statistics.max_thick_time = elapsted_time;
 	}
+
 }
 
 void print_all_bigrades(ostream& out=cout) {
@@ -332,6 +336,7 @@ int main(int argc, char** argv) {
 
 	Statistics.print();
 
+	cout << Count << endl;
 	// print_all_distances();
 	// print_all_square_edge();
 	// print_all_edge_vertex(num_edges);
