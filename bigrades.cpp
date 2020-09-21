@@ -85,6 +85,7 @@ void build_graph() {
 			graph[i]->children.push_back(graph[i+columns]);
 	}
 }
+int Count = 0;
 
 void get_bigrades(int value, bool log=false, ostream& out=cout) {
 	if (log) out << "New call to get_bigrades()" << endl;
@@ -100,6 +101,8 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 			Statistics.max_num_bigrades = n->bigrades.size();
 
 		for (int i = 0; i < n->children.size(); i++) {
+			Count ++;
+
 			if (n->children[i]->bigrades.empty()) {
 				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
 				n->children[i]->depth = n->depth + 1;
@@ -322,6 +325,8 @@ int main(int argc, char** argv) {
 	Statistics.output_time = chrono::duration_cast<chrono::milliseconds>(out_stop - out_start).count();
 
 	Statistics.print();
+
+	cout << Count << endl;
 
 	// print_all_square_edge();
 	// print_all_edge_vertex(num_edges);

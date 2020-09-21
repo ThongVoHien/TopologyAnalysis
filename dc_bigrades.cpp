@@ -76,10 +76,12 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 			// go through all pixels that appear for that value
 			for (int i = 0; i < it->second.size(); i++) {
 				node* pixel = graph[it->second[i]];
-				// go through all pixels in that distance
+				// go through all pixels in that distance (compared with the cur. pixel)
 				// make sure within bounds
 				int plabel = -1;
 				for (auto distance = d->second.begin(); distance != d->second.end(); distance++) {
+					
+					if (distance->first )
 					if (pixel->c + distance->first < columns && pixel->r + distance->second < rows) {
 						plabel = (pixel->c+distance->first)+(pixel->r+distance->second)*columns;
 						if (graph[plabel]->dc_bigrades.empty()) {

@@ -11,12 +11,14 @@
 using namespace std;
 
 /* structs */
+typedef unsigned long long int ull;
+
 
 struct node {
 	int label;
 	int r, c;
 	vector<node*> children;
-	vector< pair<int,double> > dc_bigrades;
+	vector< pair<int,ull> > dc_bigrades;
 
 	node() { label = -1; }
 };
@@ -48,17 +50,17 @@ struct stats {
 /* global variables */
 vector<node*> graph;
 map<int, vector<int> > value_list;
-map<double, vector< pair<int,int> > > distance_list;
+map<ull, vector< pair<int,int> > > distance_list;
 int rows, columns, Count;
 
-void print_bigrades(vector< pair<int,double> > bg, ostream& out=cout) {
+void print_bigrades(vector< pair<int,ull> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
 		out << "(" << bg[i].first << "," << setprecision(2) << bg[i].second << ")" << " ";
 	out << endl;
 }
 
-double get_min_y(vector< pair<int, double> >& grades) {
-	double min_y = grades[0].second;
+ull get_min_y(vector< pair<int, ull> >& grades) {
+	ull min_y = grades[0].second;
 	for (int i = 1; i < grades.size(); i++) {
 		if (grades[i].second < min_y)
 			min_y = grades[i].second;
@@ -107,7 +109,7 @@ void get_dc_bigrades(bool log=false, ostream& out=cout) {
 			// cout << "\tobtain bigrade (" << value << "," << sqrt(min_distance) << ")\n";
 			if ( (graph[label]->dc_bigrades.size() == 0) || (min_distance < previous_bigrade_y)){
 				previous_bigrade_y = min_distance;
-				graph[label]->dc_bigrades.push_back({value, sqrt(min_distance)});
+				graph[label]->dc_bigrades.push_back({value, min_distance});
 				continue;
 			}
 			// if (sqrt(min_distance) < previous_bigrade.second)
@@ -253,7 +255,7 @@ int main(int argc, char** argv) {
 		graph[n->label] = n;
 
 		value_list[pixel].push_back(n->label);
-		distance_list[sqrt(r*r+c*c)].push_back(pair<int,int>(c,r));
+		distance_list[r*r+c*c].push_back(pair<int,int>(c,r));
 
 		c++;
 		if (c == columns) {

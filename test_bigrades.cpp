@@ -96,55 +96,6 @@ bool test_bigrades(){
 	return true;
 }
 
-void print_all_bigrades(ostream& out=cout) {
-	out << "(" << columns << "," << rows << ")" << endl;
-	for (int i = 0; i < graph.size(); i++) {
-		out << graph[i]->label << ": ";
-		print_bigrades(graph[i]->bigrades, out);
-	}
-}
-
-void print_graph(ostream& out=cout) {
-	for (int i = 0; i < graph.size(); i++) {
-		out << graph[i]->label << ": ";
-		for (auto it = graph[i]->children.begin(); it != graph[i]->children.end(); it++)
-			out << (*it)->label << " ";
-		out << endl;
-	}
-}
-
-void print_all_edge_vertex(int total, ostream& out=cout) {
-	for (int e = 0; e < total; e++) {
-		out << "Edge " << e << ":" << endl;
-		out << "Vertices: ";
-		if (e/((columns+1)*rows) == 0)
-			out << e << " "  << e+(columns+1) << endl;
-		else {
-			int j = e-(columns+1)*rows;
-			int k = j/(rows+1) + (j%(rows+1))*(columns+1);
-			out << k << " " << k+1 << endl; 
-		}
-	}
-}
-
-void print_all_square_edge(ostream& out=cout) {
-	for (auto it = graph.begin(); it != graph.end(); it++) {
-		out << "Pixel " << (*it)->label << ":" << endl;
-		out << "Edges: " << ((*it)->c)+((*it)->r)*(columns+1) << " " 
-						 << (((*it)->c)+1)+((*it)->r)*(columns+1) << " " 
-						 << (columns+1)*rows+((*it)->r)+((*it)->c)*(rows+1) << " " 
-						 << (columns+1)*rows+(((*it)->r)+1)+((*it)->c)*(rows+1) << endl;	
-	}
-}
-
-void print_all_values(ostream& out=cout) {
-	for (auto it = value_list.begin(); it != value_list.end(); it++) {
-		out << it->first << ": ";
-		for (int i = 0; i < it->second.size(); i++)
-			out << it->second[i] << " ";
-		out << endl;
-	}
-}
 
 /* Edges: Total - rows*(columns+1) + columns*(rows+1)
 For pixel in row r and column c:

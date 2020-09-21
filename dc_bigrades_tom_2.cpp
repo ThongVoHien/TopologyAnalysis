@@ -9,7 +9,8 @@
 
 using namespace std;
 
-const double EPSILON = 0.000000001;
+typedef unsigned long long int ull;
+// const double EPSILON = 0.000000001;
 /* structs */
 
 struct node {
@@ -18,7 +19,7 @@ struct node {
 	int r_diff, c_diff;
 	vector<node*> children;
 	int value;
-	vector< pair<int,double> > bigrades;
+	vector< pair<int, ull> > bigrades;
 
 	node() { label = -1; }
 };
@@ -71,7 +72,7 @@ vector<node*> graph;
 map<int, vector<int> > value_list;
 int rows, columns;
 
-void print_bigrades(vector< pair<int,double> > bg, ostream& out=cout) {
+void print_bigrades(vector< pair<int, ull> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
 		out << "(" << bg[i].first << "," << setprecision(2) << bg[i].second << ")" << " ";
 	out << endl;
@@ -86,7 +87,7 @@ void print_all_bigrades(ostream& out=cout) {
 	}
 }
 
-int get_max_x(vector< pair<int, double> >& grades) {
+int get_max_x(vector< pair<int, ull> >& grades) {
 	int max_x = grades[0].first;
 	for (int i = 1; i < grades.size(); i++) {
 		if (grades[i].first > max_x)
@@ -111,6 +112,7 @@ int get_max_x(vector< pair<int, double> >& grades) {
 int Count = 0;
 
 priority_queue< pair<node*, pair<int, int>>, vector<pair<node*, pair<int, int> > >, compareNode > que;
+
 void get_bigrades(int value, bool log=false, ostream& out=cout) {
 	if (log) out << "New call to get_bigrades()" << endl;
 	
@@ -126,12 +128,12 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 
 		// cout << n->label << " (" << value << "," << sqrt(sum_square(coordinate_diff)) << ")"<< endl;
 		if (n->bigrades.size() != 0) {
-			pair<int, double> last_bigrade = n->bigrades[ n->bigrades.size() - 1];
-			if ( (last_bigrade.first == value) || (last_bigrade.second - sqrt(sum_square(coordinate_diff)) < EPSILON) ) continue;
+			pair<int, ull> last_bigrade = n->bigrades[ n->bigrades.size() - 1];
+			if ( (last_bigrade.first == value) || (last_bigrade.second  < sum_square(coordinate_diff)) ) continue;
 		}
 		// cout << "Approve this bigrade!\n";	
 		// each point gets here once
-		n->bigrades.push_back({ value, sqrt(sum_square(coordinate_diff)) });
+		n->bigrades.push_back({ value, sum_square(coordinate_diff) });
 		Statistics.avg_num_bigrades++;
 		if (graph[n->label]->bigrades.size() > Statistics.max_num_bigrades)
 				Statistics.max_num_bigrades = graph[n->label]->bigrades.size();
