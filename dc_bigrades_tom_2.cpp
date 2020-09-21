@@ -74,7 +74,7 @@ int rows, columns;
 
 void print_bigrades(vector< pair<int, ull> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
-		out << "(" << bg[i].first << "," << setprecision(2) << bg[i].second << ")" << " ";
+		out << "(" << bg[i].first << "," << bg[i].second << ")" << " ";
 	out << endl;
 }
 
@@ -129,7 +129,7 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 		// cout << n->label << " (" << value << "," << sqrt(sum_square(coordinate_diff)) << ")"<< endl;
 		if (n->bigrades.size() != 0) {
 			pair<int, ull> last_bigrade = n->bigrades[ n->bigrades.size() - 1];
-			if ( (last_bigrade.first == value) || (last_bigrade.second  < sum_square(coordinate_diff)) ) continue;
+			if ( (last_bigrade.first == value) || (last_bigrade.second  <= sum_square(coordinate_diff)) ) continue;
 		}
 		// cout << "Approve this bigrade!\n";	
 		// each point gets here once

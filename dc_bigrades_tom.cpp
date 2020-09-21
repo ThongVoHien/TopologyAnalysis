@@ -55,7 +55,7 @@ int rows, columns, Count;
 
 void print_bigrades(vector< pair<int,ull> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
-		out << "(" << bg[i].first << "," << setprecision(2) << bg[i].second << ")" << " ";
+		out << "(" << bg[i].first << "," << bg[i].second << ")" << " ";
 	out << endl;
 }
 

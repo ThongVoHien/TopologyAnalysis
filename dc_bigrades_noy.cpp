@@ -9,6 +9,7 @@
 #include <cmath>
 
 using namespace std;
+typedef long long int ull;
 
 /* structs */
 
@@ -16,9 +17,9 @@ struct node {
 	int label;
 	int r, c;
 	vector<node*> children;
-	vector< pair<int,double> > dc_bigrades;
+	vector< pair<int,ull> > dc_bigrades;
 	int h, v;
-	double distance;
+	ull distance;
 
 	node() { label = -1; }
 };
@@ -54,7 +55,7 @@ struct stats {
 /* global variables */
 vector<node*> graph;
 map<int, vector<int> > value_list;
-map<double, vector<int> > distance_levels;
+map<ull, vector<int> > distance_levels;
 int rows, columns;
 
 void reset() {
@@ -68,14 +69,14 @@ void reset() {
 	distance_levels.clear();
 }
 
-void print_bigrades(vector< pair<int,double> > bg, ostream& out=cout) {
+void print_bigrades(vector< pair<int,ull> > bg, ostream& out=cout) {
 	for (int i = 0; i < bg.size(); i++)
-		out << "(" << bg[i].first << "," << setprecision(2) << bg[i].second << ")" << " ";
+		out << "(" << bg[i].first << "," << bg[i].second << ")" << " ";
 	out << endl;
 }
 
-double get_min_y(vector< pair<int, double> >& grades) {
-	double min_y = grades[0].second;
+ull get_min_y(vector< pair<int, ull> >& grades) {
+	ull min_y = grades[0].second;
 	for (int i = 1; i < grades.size(); i++) {
 		if (grades[i].second < min_y)
 			min_y = grades[i].second;
@@ -122,17 +123,17 @@ void get_dc_bigrades(int value, bool log=false, ostream& out=cout) {
 		for (auto n = d->second.begin(); n != d->second.end(); n++) {
 			Count ++;
 			if (graph[*n]->dc_bigrades.empty()) {
-				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
+				graph[*n]->dc_bigrades.push_back(pair<int,ull>(value, d->first));
 				Statistics.avg_num_bigrades++;
 			}
 			else if (get_min_y(graph[*n]->dc_bigrades) > d->first) {
-				graph[*n]->dc_bigrades.push_back(pair<int,double>(value, d->first));
+				graph[*n]->dc_bigrades.push_back(pair<int,ull>(value, d->first));
 				Statistics.avg_num_bigrades++;
 			}
 			for (int j = 0; j < graph[*n]->children.size(); j++) {
 				int r = abs(graph[*n]->r - graph[*n]->children[j]->r) + graph[*n]->v;
 				int c = abs(graph[*n]->c - graph[*n]->children[j]->c) + graph[*n]->h;
-				double distance = sqrt(c*c+r*r);
+				ull distance = c*c+r*r;
 				if (graph[*n]->children[j]->distance == -1 || distance < graph[*n]->children[j]->distance) {
 					graph[*n]->children[j]->h = c;
 					graph[*n]->children[j]->v = r;
