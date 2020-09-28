@@ -52,14 +52,12 @@ struct stats {
 
 } Statistics;
 
-int sum_square(pair<int, int> x){
+int sum_square(pair<int, int> x){ // ~ distance to the origins
 	return x.first* x.first + x.second * x.second;
 }
 struct compareNode{
 	bool operator()(const pair<node*, pair<int, int>>& x, const pair<node*, pair<int, int>>& y){
-		// if (sum_square(x.second) != sum_square(y.second))
-			return sum_square(x.second) > sum_square(y.second);
-		// else return x.first->label < y.first->label;
+		return sum_square(x.second) > sum_square(y.second); // only compare the distance value only
 	}
 };
 
@@ -97,20 +95,39 @@ int get_max_x(vector< pair<int, ull> >& grades) {
 }
 
 // void build_graph() {
-
-// 	for (int label = 0; label < graph.size(); label++) {
-// 		if (label % columns != 0)
-// 			graph[label]->children.push_back(graph[label-1]);
-// 		if ((label+1) % columns != 0)
-// 			graph[label]->children.push_back(graph[label+1]);
-// 		if (label >= columns)
-// 			graph[label]->children.push_back(graph[label-columns]);
-// 		if (label + columns < rows*columns)
-// 			graph[label]->children.push_back(graph[label+columns]);
+// 	for (int i = 0; i < graph.size(); i++) {
+// 		// left
+// 		if (i % columns != 0) {
+// 			graph[i]->children.push_back(graph[i-1]);
+// 			// top left
+// 			if (i-1 >= columns)
+// 				graph[i]->children.push_back(graph[i-1-columns]);
+// 			// bottom left
+// 			if (i-1 + columns < rows*columns)
+// 				graph[i]->children.push_back(graph[i-1+columns]);
+// 		}
+// 		// right
+// 		if ((i+1) % columns != 0) {
+// 			graph[i]->children.push_back(graph[i+1]);
+// 			// top right
+// 			if (i+1 >= columns)
+// 				graph[i]->children.push_back(graph[i+1-columns]);
+// 			// bottom right
+// 			if (i+1 + columns < rows*columns)
+// 				graph[i]->children.push_back(graph[i+1+columns]);
+// 		}
+// 		// top
+// 		if (i >= columns)
+// 			graph[i]->children.push_back(graph[i-columns]);
+// 		// bottom
+// 		if (i + columns < rows*columns)
+// 			graph[i]->children.push_back(graph[i+columns]);
+// 		// diagonally adjacent
 // 	}
 // }
 int Count = 0;
 
+// priority keep tracks of each nodes and its corresponding row_diff and col_diff to origins
 priority_queue< pair<node*, pair<int, int>>, vector<pair<node*, pair<int, int> > >, compareNode > que;
 
 void get_bigrades(int value, bool log=false, ostream& out=cout) {
@@ -120,32 +137,30 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 		Count++;
 		// cout << "Que size " << que.size() << endl;
 		// if (log) out << "Popping element: Pixel-" << n->label << endl;
-		pair<node*, pair<int, int>> tmp = que.top(); // O(log(n))
-		node* n = tmp.first;
-		pair<int, int> coordinate_diff = tmp.second;
+
+		// obtain the closest node
+		pair<node*, pair<int, int>> next_node = que.top(); // O(log(n))
+		node* n = next_node.first;
+		pair<int, int> coordinate_diff = next_node.second;
 		que.pop();
 		num_que_items--;
 
-		// cout << n->label << " (" << value << "," << sqrt(sum_square(coordinate_diff)) << ")"<< endl;
+		pair<int, ull> potential_bigrade = { value, sum_square(coordinate_diff) };
+		// Skip if potential  bigrade ~ last bigrade
 		if (n->bigrades.size() != 0) {
 			pair<int, ull> last_bigrade = n->bigrades[ n->bigrades.size() - 1];
-			if ( (last_bigrade.first == value) || (last_bigrade.second  <= sum_square(coordinate_diff)) ) continue;
+			if ( (last_bigrade.first == potential_bigrade.first) || (last_bigrade.second  <= potential_bigrade.second) ) 
+				continue;
 		}
-		// cout << "Approve this bigrade!\n";	
-		// each point gets here once
-		n->bigrades.push_back({ value, sum_square(coordinate_diff) });
+
+		// valid bigrade
+		n->bigrades.push_back( potential_bigrade );
 		Statistics.avg_num_bigrades++;
 		if (graph[n->label]->bigrades.size() > Statistics.max_num_bigrades)
 				Statistics.max_num_bigrades = graph[n->label]->bigrades.size();
 
-		// // obtain statistics
-		// if (n->depth > Statistics.num_thick_levels)
-		// 	Statistics.num_thick_levels = n->depth;
-		// if (n->bigrades.size() > Statistics.max_num_bigrades)
-		// 	Statistics.max_num_bigrades = n->bigrades.size();
-
+		// check neighbors of current point
 		int label = n->label;
-		// cout << "Neighbor\n";
 		if (label % columns != 0){ // left
 			if ((graph[label-1]->bigrades.empty()) || (get_max_x(graph[label-1]->bigrades) < value)) {
 				que.push( {graph[label-1], {coordinate_diff.first, coordinate_diff.second-1} });
@@ -190,7 +205,7 @@ void get_bigrades(int value, bool log=false, ostream& out=cout) {
 				}
 			}
 		}
-		// cout << "Tmp\n";
+
 		if ((label+1) % columns != 0){ // right
 			// top
 			int new_label = label + 1 - columns;
@@ -217,10 +232,8 @@ void get_all_bigrades(bool log=false, ostream& out=cout) { // O( nvlog(n))
 
 	for (auto it = value_list.begin(); it != value_list.end(); it++) { // O(value)
 		auto thick_start = chrono::high_resolution_clock::now();
-		// cout << "Working with value: " << it->first << endl;
+
 		if (log) out << "Working with value: " << it->first << endl;
-		// root->depth = -1;
-		// if (log) out << "Pixels: ";
 
 		// obtain all points value = current value = it->first
 		for (int i = 0; i < it->second.size(); i++) { // O(n)
@@ -230,7 +243,6 @@ void get_all_bigrades(bool log=false, ostream& out=cout) { // O( nvlog(n))
 		}
 		// if (log) out << endl;
 		// cout << endl;
-		// num_que_items = 1;
 		get_bigrades(it->first, log, out); // O(n)
 
 		auto thick_stop = chrono::high_resolution_clock::now();
