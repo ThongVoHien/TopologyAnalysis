@@ -125,6 +125,7 @@ int get_max_x(vector< pair<int, ull> >& grades) {
 // 		// diagonally adjacent
 // 	}
 // }
+
 int Count = 0;
 
 // priority keep tracks of each nodes and its corresponding row_diff and col_diff to origins
