@@ -89,7 +89,17 @@ bool is_point_at_max_depth(int label, int depth){
 
 
 bool verify_bigrade(int x, int y, int label){
-	// verify bigrade (x,y) (y < 0): meet all these 3 conditions:
+	// verify positive bigrade (x,y) (y < 0): meet all these 3 conditions:
+	// - verify at (x, y) is black
+	// - verify at (x, y+1) is white
+	//   		with depth |y-1|: reach this point 
+	//		Other words: that label is at depth y
+	// - verify at (x+1, y) is white
+	//   BFS (all points with values >= x) 
+	//			with depth of |y|: reach this point
+	//		Other words: that label is at least depth > y
+
+	// verify negative bigrade (x,y) (y < 0): meet all these 3 conditions:
 	// - verify at (x, y) is black
 	// - verify at (x, y-1) is white
 	//   BFS (all points with values > x) 
@@ -101,7 +111,6 @@ bool verify_bigrade(int x, int y, int label){
 	//			with depth of |y|: reach this point
 	//		Other words: that label is at depth |y|
 
-	// cout << "Test point " << label << " bigrade (" << x << "," << y << ")\n";
 	/* first two conditions */
 	// obtain all points with value >= x
 	while (!que.empty()){
