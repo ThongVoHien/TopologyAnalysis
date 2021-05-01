@@ -109,7 +109,7 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 			Statistics.num_thin_levels = n->depth;
 
 		for (int i = 0; i < n->children.size(); i++) {
-			if (value == 0) continue;
+			if (value == 0) continue; // TODO: WTH??
 			if (n->children[i]->negative_bigrades.empty()) {
 				if (log) out << "Setting depth of Pixel-" << n->children[i]->label << " to " << n->depth + 1 << endl;
 				n->children[i]->depth = n->depth + 1;
@@ -161,15 +161,18 @@ void convert_white_to_negative_bigrades(bool log=false, ostream& out=cout) {
 void get_all_negative_bigrades(bool log=false, ostream& out=cout) {
 	for (map<int, vector<int>>::reverse_iterator it = value_list.rbegin(); it != value_list.rend(); it++) {
 		auto thin_start = chrono::high_resolution_clock::now();
+
 		if (log) out << "Working with value: " << it->first << endl;
 		node* root = new node();
 		root->depth = -1;
+		
 		if (log) out << "Pixels: ";
 		for (int i = 0; i < it->second.size(); i++) {
 			root->children.push_back(graph[it->second[i]]);
 			if (log) out << "Pixel-" << it->second[i] << " ";
 		}
 		if (log) out << endl;
+		
 		que.push(root);
 		num_que_items = 1;
 		get_white_bigrades(it->first, log, out);
@@ -230,17 +233,22 @@ void get_all_bigrades(bool log=false, ostream& out=cout) {
 	for (auto it = value_list.begin(); it != prev(value_list.end()); it++) {
 		auto thick_start = chrono::high_resolution_clock::now();
 		if (log) out << "Working with value: " << it->first << endl;
+		
 		node* root = new node();
 		root->depth = -1;
+
 		if (log) out << "Pixels: ";
 		for (int i = 0; i < it->second.size(); i++) {
 			root->children.push_back(graph[it->second[i]]);
 			if (log) out << "Pixel-" << it->second[i] << " ";
 		}
 		if (log) out << endl;
+		
 		que.push(root);
 		num_que_items = 1;
+		
 		get_positive_bigrades(it->first, log, out);
+		
 		auto thick_stop = chrono::high_resolution_clock::now();
 		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
 		Statistics.avg_thick_time += elapsted_time;

@@ -134,8 +134,8 @@ bool verify_bigrade(int x, int y, int label){
 		graph[i]->depth = -1;
 	}
 	// bfs depth y
-	// cout << "Test point " << label << " bigrade (" << x << "," << y << 
-	// 	") at depth " << abs(y-1) << endl;
+	cout << "Test point " << label << " bigrade (" << x << "," << y << 
+		") at depth " << abs(y-1) << endl;
 	if (!is_point_at_depth(label, abs(y-1))) return false;
 	
 	// reset & prepare for next bfs
@@ -144,8 +144,8 @@ bool verify_bigrade(int x, int y, int label){
 		graph[i]->depth = -1;
 
 	/* 3rd condition */
-	// cout << "Test point " << label << " bigrade (" << x << "," << y << 
-	// 	") at depth " << abs(y) << endl;
+	cout << "Test point " << label << " bigrade (" << x << "," << y << 
+		") at depth " << abs(y) << endl;
 	for (int i = 0; i < value_list[x].size(); i++) { // Need checking
 		root->children.push_back(graph[value_list[x][i]]);
 		// cout << graph[value_list[x][i]]->label << endl;
@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
 	}
 
 	build_graph();
-
+	cout << "TEST\n";
 	// read bigrades file
 	string line;
 	// skip first line

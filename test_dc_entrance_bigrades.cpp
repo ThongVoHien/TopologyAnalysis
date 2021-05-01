@@ -73,8 +73,8 @@ void build_graph() {
 // else
 //   return (point <label> is at depth <= <depth>)
 bool check_point_depth_via_bfs(int label, int depth, bool isEqual){
-	cout << "check_point_depth_via_bfs point " << label <<
-		" at depth " << depth << endl;
+	// cout << "check_point_depth_via_bfs point " << label <<
+	// 	" at depth " << depth << endl;
 	while (!que.empty()){
 		// obtain the closest node
 		pair<node*, pair<int, int>> next_node = que.top(); // O(log(n))
@@ -86,7 +86,7 @@ bool check_point_depth_via_bfs(int label, int depth, bool isEqual){
 		if (n->depth != -1) continue;
 		n->depth = sum_square(coordinate_diff);
 		// if (log) out << "Popping element: Pixel-" << n->label << endl;
-		cout << "Popping element: Pixel-" << n->label << " with depth " << n->depth << endl;
+		// cout << "Popping element: Pixel-" << n->label << " with depth " << n->depth << endl;
 		// cout << label << " " << n-
 		if (n->label == label){
 			if (isEqual) return (n->depth == depth);
@@ -263,28 +263,30 @@ bool verify_bigrade(int x, int y, int label){
 }
 
 bool test_random_bigrades(int num_points=200){
-	while (num_points > 0){
-		int label = rand()%(rows*columns);
-		int bigrade_id = rand()%(graph[label]->bigrades.size());
-		int x = graph[label]->bigrades[bigrade_id].first;
-		int y = graph[label]->bigrades[bigrade_id].second;
-		if (y >= 0) continue;
-		if (verify_bigrade(x, y, label) == false) return false;
-		num_points -- ;
-	}
-
-	// for (int label = 0; label < rows * columns; label++){
-	// 	// cout << "label " << label << " pixel " << graph[label]->pixel << endl;
-	// 	for (auto it = graph[label]->bigrades.begin(); it != graph[label]->bigrades.end(); it++){
-	// 		// cout << "test bigrade: (" << it->first << "," << it->second << ")" << endl;
-
-	// 		// test negative bigrades
-	// 		int x = it->first;
-	// 		int y = it->second;
-	// 		if (y >= 0) continue;
-	// 		if (verify_bigrade(x, y, label) == false) return false;
-	// 	}
+	// while (num_points > 0){
+	// 	int label = rand()%(rows*columns);
+	// 	int bigrade_id = rand()%(graph[label]->bigrades.size());
+	// 	int x = graph[label]->bigrades[bigrade_id].first;
+	// 	int y = graph[label]->bigrades[bigrade_id].second;
+	// 	if (y >= 0) continue;
+	// 	if (verify_bigrade(x, y, label) == false) return false;
+	// 	num_points -- ;
 	// }
+
+	for (int label = 0; label < rows * columns; label++){
+		// cout << "label " << label << " pixel " << graph[label]->pixel << endl;
+		for (auto it = graph[label]->bigrades.begin(); it != graph[label]->bigrades.end(); it++){
+			// cout << "test bigrade: (" << it->first << "," << it->second << ")" << endl;
+
+			// test negative bigrades
+			int x = it->first;
+			int y = it->second;
+			if (y >= 0) continue;
+			if (verify_bigrade(x, y, label) == false) return false;
+			num_points --;
+			if (num_points == 0) return true;
+		}
+	}
 	return true;
 }
 
@@ -313,6 +315,7 @@ int main(int argc, char** argv) {
 	string filename, bigrades_file;
 	bool logging;
 	string log_file;
+	int num_points_check = 2000;
 
 	if (argc == 2) {
 		filename = argv[1];
@@ -329,6 +332,13 @@ int main(int argc, char** argv) {
 		filename = argv[1];
 		bigrades_file = argv[2];
 		log_file = argv[3];
+		logging = true;
+	}
+	else if (argc == 5) {
+		filename = argv[1];
+		bigrades_file = argv[2];
+		log_file = argv[3];
+		num_points_check = atoi(argv[4]);
 		logging = true;
 	}
 	else {
@@ -411,7 +421,7 @@ int main(int argc, char** argv) {
 		
 	}
 
-	if (test_random_bigrades()){
+	if (test_random_bigrades(num_points_check)){
 		cout << "Correct!\n";
 	} else{
 		cout << "Incorrect!\n";

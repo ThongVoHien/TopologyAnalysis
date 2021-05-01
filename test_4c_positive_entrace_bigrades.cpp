@@ -47,10 +47,22 @@ void build_graph() {
 }
 
 bool test_bigrades(){
+	// verify bigrades are decreasubg in Y, increasing in X
 	for (int label = 0; label < rows * columns; label++){
-		// cout << "label " << label << " pixel " << graph[label]->pixel << endl;
+		vector< pair<int, int> > bigrades_list = graph[label]->bigrades;
+		for (int i = 1; i < bigrades_list.size(); i++){
+			if ( (bigrades_list[i].first <= bigrades_list[i-1].first) || (bigrades_list[i].second >= bigrades_list[i-1].second) ){
+				cout << "Error at node " << label << " at (" << 
+						graph[label]->r << "," << graph[label]->c << ")\n";
+				return false;
+			}
+		}
+	}
+
+
+	// verify bigrades are correct
+	for (int label = 0; label < rows * columns; label++){
 		for (auto it = graph[label]->bigrades.begin(); it != graph[label]->bigrades.end(); it++){
-			// cout << "test bigrade: (" << it->first << "," << it->second << ")" << endl;
 
 			// two ways to obtain that bigrade value:
 			//  - (1) its label is = the current threshold on x_axis, then y_axis = 0		

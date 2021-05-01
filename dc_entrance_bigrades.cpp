@@ -35,6 +35,10 @@ struct stats {
 	double avg_num_bigrades;
 	double max_thick_time;
 	double avg_thick_time;
+	double max_thin_time;
+	double avg_thin_time;
+
+	double convert_time;
 	double total_time;
 	double output_time;
 
@@ -42,11 +46,19 @@ struct stats {
 		out << "Image Size: " << image_columns << "x" << image_rows << endl;
 		out << "Time to read in image: " << image_read_time/1000 << "s" << endl;
 		// out << "Number of distinct function values: " << distinct_fn_vals << endl;
-		out << "Number of thickness levels: " << num_thick_levels << endl;
+		// out << "Number of thickness levels: " << num_thick_levels << endl;
+		// out << "Number of thinness levels: " << num_thin_levels-1 << endl;
+
 		out << "Maximum bigrades on a pixel: " << max_num_bigrades << endl;
 		out << "Average bigrades on a pixel: " << avg_num_bigrades << endl;
+		
 		out << "Maximum time to thicken: " << max_thick_time/1000 << "s" << endl;
 		out << "Average time to thicken: " << avg_thick_time/1000 << "s" << endl;
+
+		out << "Maximum time to thin: " << max_thin_time/1000 << "s" << endl;
+		out << "Average time to thin: " << avg_thin_time/1000 << "s" << endl;
+
+		out << "Time to convert white bigrades to thin bigrades: " << convert_time/1000 << "s" << endl;
 		out << "Total time to build bifiltration: " << total_time/1000 << "s" << endl;
 		out << "Time to write bifiltration to output file: " << output_time/1000 << "s" << endl;
 	}
@@ -136,6 +148,9 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 		que.pop();
 		num_que_items--;
 
+		// if (n->depth > Statistics.num_thin_levels)
+		// 	Statistics.num_thin_levels = n->depth;
+
 		pair<int, ull> potential_bigrade = { value-1, sum_square(coordinate_diff) };
 		// Skip if this negative_bigrades ~ last bigrade
 		if (n->negative_bigrades.size() != 0) {
@@ -150,8 +165,6 @@ void get_white_bigrades(int value, bool log=false, ostream& out=cout) {
 		// each point gets here once
 		n->negative_bigrades.push_back(potential_bigrade);
 		// Statistics.avg_num_negative_bigrades++;
-		if (graph[n->label]->negative_bigrades.size() > Statistics.max_num_bigrades)
-				Statistics.max_num_bigrades = graph[n->label]->negative_bigrades.size();
 
 		int label = n->label;
 		// cout << "TEST\n";
@@ -281,7 +294,7 @@ void convert_white_to_negative_bigrades(bool log=false, ostream& out=cout) {
 void get_all_negative_bigrades(bool log=false, ostream& out=cout) {
 	// scan all possible values (smallest to largest)
 	for (map<int, vector<int>>::reverse_iterator it = value_list.rbegin(); it != value_list.rend(); it++) { // O(value)
-		auto thick_start = chrono::high_resolution_clock::now();
+		auto thin_start = chrono::high_resolution_clock::now();
 
 		if (log) out << "Working with value: " << it->first << endl;
 		// cout << "Working with value: " << it->first << endl;
@@ -298,13 +311,17 @@ void get_all_negative_bigrades(bool log=false, ostream& out=cout) {
 		// cout << endl;
 		get_white_bigrades(it->first, log, out); // O(n)
 
-		auto thick_stop = chrono::high_resolution_clock::now();
-		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thick_stop - thick_start).count();
-		Statistics.avg_thick_time += elapsted_time;
-		if (elapsted_time > Statistics.max_thick_time)
-			Statistics.max_thick_time = elapsted_time;
+		auto thin_stop = chrono::high_resolution_clock::now();
+		double elapsted_time = chrono::duration_cast<chrono::milliseconds>(thin_stop - thin_start).count();
+		Statistics.avg_thin_time += elapsted_time;
+		if (elapsted_time > Statistics.max_thin_time)
+			Statistics.max_thin_time = elapsted_time;
 	}
+	auto conv_start = chrono::high_resolution_clock::now();	
 	convert_white_to_negative_bigrades(log, out);
+
+	auto conv_stop = chrono::high_resolution_clock::now();
+	Statistics.convert_time = chrono::duration_cast<chrono::milliseconds>(conv_stop - conv_start).count();
 }
 
 void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
@@ -320,6 +337,9 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 		que.pop();
 		num_que_items--;
 
+		// if (n->depth > Statistics.num_thick_levels)
+		// 	Statistics.num_thick_levels = n->depth;
+
 		// Skip if this bigrades ~ last bigrade
 		if (n->bigrades.size() != 0) {
 			pair<int, ull> last_bigrade = n->bigrades[ n->bigrades.size() - 1];
@@ -329,33 +349,36 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 
 		// each point gets here once
 		n->bigrades.push_back({ value, sum_square(coordinate_diff) });
-		Statistics.avg_num_bigrades++;
-		if (graph[n->label]->bigrades.size() > Statistics.max_num_bigrades)
-				Statistics.max_num_bigrades = graph[n->label]->bigrades.size();
+		// Statistics.avg_num_bigrades++;
+
 
 		int label = n->label;
 		if (label % columns != 0){ // left
 			if ((graph[label-1]->bigrades.empty()) || (get_max_x(graph[label-1]->bigrades) < value)) {
 				que.push( {graph[label-1], {coordinate_diff.first, coordinate_diff.second-1} });
 				num_que_items++;
+				Statistics.avg_num_bigrades++;
 			}
 		}
 		if ((label+1) % columns != 0){ // right
 			if ((graph[label+1]->bigrades.empty()) || (get_max_x(graph[label+1]->bigrades) < value)) {
 				que.push( {graph[label+1], {coordinate_diff.first, coordinate_diff.second+1} });
 				num_que_items++;
+				Statistics.avg_num_bigrades++;
 			}
 		}
 		if (label >= columns){ // up
 			if ((graph[label-columns]->bigrades.empty()) || (get_max_x(graph[label-columns]->bigrades) < value)) {
 				que.push( {graph[label-columns], {coordinate_diff.first-1, coordinate_diff.second} });
 				num_que_items++;
+				Statistics.avg_num_bigrades++;
 			}
 		}
 		if (label + columns < rows*columns){ // down
 			if ((graph[label+columns]->bigrades.empty()) || (get_max_x(graph[label+columns]->bigrades) < value)) {
 				que.push( {graph[label+columns], {coordinate_diff.first+1, coordinate_diff.second} });
 				num_que_items++;
+				Statistics.avg_num_bigrades++;
 			}
 		}
 
@@ -367,6 +390,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first+1, coordinate_diff.second-1} });
 					num_que_items++;
+					Statistics.avg_num_bigrades++;
 				}
 			}
 			// top
@@ -375,6 +399,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first-1, coordinate_diff.second-1} });
 					num_que_items++;
+					Statistics.avg_num_bigrades++;
 				}
 			}
 		}
@@ -386,6 +411,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first-1, coordinate_diff.second+1} });
 					num_que_items++;
+					Statistics.avg_num_bigrades++;
 				}
 			}
 			// bottom
@@ -394,6 +420,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first+1, coordinate_diff.second+1} });
 					num_que_items++;
+					Statistics.avg_num_bigrades++;
 				}
 			}
 		}
@@ -558,6 +585,9 @@ int main(int argc, char** argv) {
 	Statistics.avg_num_bigrades = 0;
 	Statistics.max_thick_time = 0;
 	Statistics.avg_thick_time = 0;
+
+	Statistics.max_thin_time = 0;
+	Statistics.avg_thin_time = 0;
 	// Statistics.distinct_dc_vals = 0;
 
 
@@ -592,7 +622,7 @@ int main(int argc, char** argv) {
 
 	Statistics.print();
 
-	cout << Count << endl;
+	// cout << Count << endl;
 
 	// print_all_square_edge();
 	// print_all_edge_vertex(num_edges);
