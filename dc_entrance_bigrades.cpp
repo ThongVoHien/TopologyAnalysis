@@ -45,7 +45,7 @@ struct stats {
 	void print(ostream& out=cout) {
 		out << "Image Size: " << image_columns << "x" << image_rows << endl;
 		out << "Time to read in image: " << image_read_time/1000 << "s" << endl;
-		// out << "Number of distinct function values: " << distinct_fn_vals << endl;
+		out << "Number of distinct function values: " << distinct_fn_vals << endl;
 		// out << "Number of thickness levels: " << num_thick_levels << endl;
 		// out << "Number of thinness levels: " << num_thin_levels-1 << endl;
 
@@ -349,7 +349,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 
 		// each point gets here once
 		n->bigrades.push_back({ value, sum_square(coordinate_diff) });
-		// Statistics.avg_num_bigrades++;
+		Statistics.avg_num_bigrades++;
 
 
 		int label = n->label;
@@ -357,28 +357,28 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 			if ((graph[label-1]->bigrades.empty()) || (get_max_x(graph[label-1]->bigrades) < value)) {
 				que.push( {graph[label-1], {coordinate_diff.first, coordinate_diff.second-1} });
 				num_que_items++;
-				Statistics.avg_num_bigrades++;
+				// Statistics.avg_num_bigrades++;
 			}
 		}
 		if ((label+1) % columns != 0){ // right
 			if ((graph[label+1]->bigrades.empty()) || (get_max_x(graph[label+1]->bigrades) < value)) {
 				que.push( {graph[label+1], {coordinate_diff.first, coordinate_diff.second+1} });
 				num_que_items++;
-				Statistics.avg_num_bigrades++;
+				// Statistics.avg_num_bigrades++;
 			}
 		}
 		if (label >= columns){ // up
 			if ((graph[label-columns]->bigrades.empty()) || (get_max_x(graph[label-columns]->bigrades) < value)) {
 				que.push( {graph[label-columns], {coordinate_diff.first-1, coordinate_diff.second} });
 				num_que_items++;
-				Statistics.avg_num_bigrades++;
+				// Statistics.avg_num_bigrades++;
 			}
 		}
 		if (label + columns < rows*columns){ // down
 			if ((graph[label+columns]->bigrades.empty()) || (get_max_x(graph[label+columns]->bigrades) < value)) {
 				que.push( {graph[label+columns], {coordinate_diff.first+1, coordinate_diff.second} });
 				num_que_items++;
-				Statistics.avg_num_bigrades++;
+				// Statistics.avg_num_bigrades++;
 			}
 		}
 
@@ -390,7 +390,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first+1, coordinate_diff.second-1} });
 					num_que_items++;
-					Statistics.avg_num_bigrades++;
+					// Statistics.avg_num_bigrades++;
 				}
 			}
 			// top
@@ -399,7 +399,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first-1, coordinate_diff.second-1} });
 					num_que_items++;
-					Statistics.avg_num_bigrades++;
+					// Statistics.avg_num_bigrades++;
 				}
 			}
 		}
@@ -411,7 +411,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first-1, coordinate_diff.second+1} });
 					num_que_items++;
-					Statistics.avg_num_bigrades++;
+					// Statistics.avg_num_bigrades++;
 				}
 			}
 			// bottom
@@ -420,7 +420,7 @@ void get_positive_bigrades(int value, bool log=false, ostream& out=cout) {
 				if ((graph[new_label]->bigrades.empty()) || (get_max_x(graph[new_label]->bigrades) < value)) {
 					que.push( {graph[new_label], {coordinate_diff.first+1, coordinate_diff.second+1} });
 					num_que_items++;
-					Statistics.avg_num_bigrades++;
+					// Statistics.avg_num_bigrades++;
 				}
 			}
 		}
@@ -614,6 +614,7 @@ int main(int argc, char** argv) {
 
 	Statistics.avg_num_bigrades /= num_squares;
 	Statistics.avg_thick_time /= Statistics.distinct_fn_vals;
+	Statistics.avg_thin_time /= Statistics.distinct_fn_vals;
 
 	auto out_start = chrono::high_resolution_clock::now();
 	print_all_bigrades(output);

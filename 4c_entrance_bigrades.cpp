@@ -336,7 +336,7 @@ int main(int argc, char** argv) {
 	if (argc == 2) {
 		filename = argv[1];
 		outputfile = argv[1];
-		outputfile += "_full_bigrades";
+		outputfile += "_bigrades";
 		logging = false;
 	}
 	else if (argc == 3) {
@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
 	}
 	else {
 		filename = "data_files/test_image";
-		outputfile = "data_files/test_image_full_bigrades";
+		outputfile = "data_files/test_image_bigrades";
 		logging = false;
 	}
 
