@@ -2,7 +2,6 @@
 #include <fstream>
 #include <stdlib.h>
 #include <ctime>
-#include <vector>
 
 using namespace std;
 
@@ -43,28 +42,30 @@ int main(int argc, char** argv) {
 	ofstream file(filename);
 	file << columns << " " << rows << endl;
 
-	// int i = 0;
-	vector<int> no_occ;
-	for (int i = 0; i < value; i++){
-		no_occ.push_back(1);
-	}
-	no_occ[value-1] = columns * rows - value+1;
+	// for (int i = 0; i < rows; i++) {
+	// 	for (int j = 0; j < columns; j++)
+	// 		file << (i+j)%value << " ";
+	// 	file << endl;
+	// }
 
-	for (int i = 0; i < rows; i++) {
+	for (int i = 0; i < rows; i++) { // (0 -> v-1 -> 0)
 		for (int j = 0; j < columns; j++){
-			
-			int val;
-			while (true){
-				val = rand()%value;
-				if (no_occ[val] != 0){
-					no_occ[val] --;
-					break;
-				} 
-			}
+			int val = (i+j)%(2*value-2); // (0 -> 2v-1)
+			if (val >= value) val = (2*value-2) - val; // (v, 2v-1) => (2v-1, 0)
 			file << val << " ";
 		}
 		file << endl;
 	}
+
+	// for (int i = 0; i < rows; i++) {
+	// 	for (int j = 0; j < columns; j++){
+	// 		int val = (i+j)%(2*value);
+	// 		if (val >= value) val =2*value-val;
+	// 		file << value - val << " ";
+	// 	}
+	// 	file << endl;
+	// }
+
 
 	file.close();
 

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctime>
 #include <vector>
+// #include <assert.h>
 
 using namespace std;
 
@@ -43,25 +44,28 @@ int main(int argc, char** argv) {
 	ofstream file(filename);
 	file << columns << " " << rows << endl;
 
-	// int i = 0;
-	vector<int> no_occ;
-	for (int i = 0; i < value; i++){
-		no_occ.push_back(1);
-	}
-	no_occ[value-1] = columns * rows - value+1;
+	// // int i = 0;
+	// vector<int> no_occ;
+	// for (int i = 0; i < value; i++){
+	// 	no_occ.push_back(1);
+	// }
+	// no_occ[value-1] = columns * rows - value+1;
 
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < columns; j++){
 			
-			int val;
-			while (true){
-				val = rand()%value;
-				if (no_occ[val] != 0){
-					no_occ[val] --;
-					break;
-				} 
-			}
-			file << val << " ";
+			int taxicab_distance_from_center = abs(i-rows/2) + abs(j-columns/2);
+			double scale = 2*(value-1)*1.0/(columns+rows);
+			int val = value - int(taxicab_distance_from_center * scale);
+			// while (true){
+			// 	val = rand()%value;
+			// 	if (no_occ[val] != 0){
+			// 		no_occ[val] --;
+			// 		break;
+			// 	} 
+			// }
+			assert(val >= 1);
+			file << val-1 << " ";
 		}
 		file << endl;
 	}
