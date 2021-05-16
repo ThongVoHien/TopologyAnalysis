@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < columns; j++){
 			
-			int taxicab_distance_from_center = abs(i-rows/2) + abs(j-columns/2);
-			double scale = 2*(value-1)*1.0/(columns+rows);
+			int taxicab_distance_from_center = abs(i-(rows-1)/2) + abs(j-(columns-1)/2);
+			double scale = 2*(value-1)*1.0/(columns+rows-2);
 			int val = value - int(taxicab_distance_from_center * scale);
 			// while (true){
 			// 	val = rand()%value;
