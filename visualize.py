@@ -46,10 +46,7 @@ while True:
 			print("Incorrect input. Try again!")
 			continue
 		try:
-			fn, th = (int)(point[0]), (int)(point[1])
-			if fn < 0 or th < 0:
-				print("Cannot take negative values (yet!). Try again!")
-				continue
+			fn, th = (int)(point[0]), (float)(point[1])
 		except:
 			print("Incorrect input. Try again!")
 			continue

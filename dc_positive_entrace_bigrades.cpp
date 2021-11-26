@@ -426,7 +426,7 @@ int main(int argc, char** argv) {
 
 	Statistics.print();
 
-	cout << Count << endl;
+	// cout << Count << endl;
 
 	// print_all_square_edge();
 	// print_all_edge_vertex(num_edges);

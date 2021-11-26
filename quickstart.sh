@@ -24,9 +24,9 @@ mkdir -p data_files
 
 # compile the files
 printf "Compiling all files\n"
-g++ -o gen -std=c++11 generate.cpp
-g++ -o big -std=c++11 bigrades.cpp
-g++ -o test -std=c++11 test_bigrades.cpp
+g++ -o gen -std=c++11 generate_image.cpp
+g++ -o big -std=c++11 4c_positive_entrance_bigrades.cpp
+g++ -o test -std=c++11 test_4c_positive_entrance_bigrades.cpp
 
 # generate data
 printf "Generating data\n"
