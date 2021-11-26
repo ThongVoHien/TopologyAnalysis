@@ -51,6 +51,11 @@ python3 make_image.py <path-to-png-image> > <data-file>
 For an RGB image, the function value will be the average of the 3 values.
 Examples are provided in the `data_files` directory.
 
+There are some other files for generating images that you can experiment with.
+These generate the function values of a pixel in a specialized manner (as compared to random).
+They generate images that present worst case images for our algorithms and will naturally take longer to analyze.
+You can compile and run them the same way as `generate_image.cpp`.
+
 ### Computing bigrades
 
 Once you have a supported data file, you can compute the bigrades by:
